@@ -1,0 +1,402 @@
+#include <iostream>
+#include <fstream>
+#include <math.h>
+#include <vector>
+#include <list>
+// 06/02/2017   //  THE NEIGHBOUR CAN BE PUSH_INTO THE CLASS AND HAVE CHECKED THE DATA IS CORRECT. BUT THE << OPERATOR HAS SOME PROBLEMS 1. operator works fine
+//6. main function has problems works fine // 7. use the size function instead of point_quantity_in_neighbour because sometimes the value in it is not right one
+
+// REMAIN TEST  2. DIHKSTRA 3. UNQIUE AND SORT FOR NEIGHBOUR 4. OUTPUT FORMAT
+using namespace std;
+
+class vertex
+    {
+    private:
+        int point_No, point_quantity_in_neighbour ;
+        float x,y,z;
+        float point_weith;
+        vector<int> neighbour_point_number;
+
+    public:
+        vertex(int _point_No=0,int _point_quantity_in_neighbour=0,float _x=0.0,float _y=0.0,float _z=0.0,float _point_weith=999999999.99,int *_neighbour_point_number=NULL );
+        vertex(istream&fin);
+        vertex(const vertex &_vertex);
+        ~vertex();
+
+        friend istream& operator>>(istream&, vertex&);//stream operator
+        friend ostream& operator<<(ostream&, vertex&);
+
+        int read_point_No() const;
+        int const read_point_quantity_in_neighbour() {return point_quantity_in_neighbour;};
+        float read_x() const ;
+        float read_y() const ;
+        float read_z() const ;
+        float read_point_weith() const { return point_weith;};
+        float calculate_distance(vertex base);
+        int read_neighbour(int No) const ; // This return doesn't work   : now work
+
+
+       // void set_neighbor_zero() ;
+        void make_the_neighbour_point_number();
+        void set_point_weigh(float newvalue);
+        void make_neighbour_point_number_unique();
+        void add_neighbour_point_number(int number);
+       /* void set_point_quantity_in_neighbour(){
+        point_quantity_in_neighbour=neighbour_point_number.size();
+        neighbour_point_number.resize(neighbour_point_number.size());   // this part has disadvantage: Because in the main it need to new space for the class but I didn't
+       // return neighbour_point_number.size();
+        };*/      // this function doesn't need
+    };
+
+    vertex::vertex(int _point_No,int _point_quantity_in_neighbour,float _x,float _y,float _z,float _point_weith,int *_neighbour_point_number)      //check
+    {
+        point_No=_point_No;
+
+        x=_x;
+        y=_y;
+        z=_z;
+        point_weith=_point_weith;
+
+
+
+        if (neighbour_point_number.empty()!=1)          // make sure the vector is empty // Do I need this line ??
+        {
+            neighbour_point_number.clear();
+        }
+
+        int i;
+        if(_neighbour_point_number!=NULL)
+        {
+            for(i=0;i<_point_quantity_in_neighbour;i++)
+            {
+                neighbour_point_number.push_back (_neighbour_point_number[i]);
+            }
+        }
+        else {this->neighbour_point_number.resize(_point_quantity_in_neighbour,0);}
+
+        point_quantity_in_neighbour=neighbour_point_number.size();
+
+        //cout<<neighbour_point_number.size(); // for test
+    }
+    istream& operator>>(istream &in, vertex &_vertex){       // the information in neighbour haven't shown
+
+        in>> _vertex.point_No>> _vertex.x>> _vertex.y>> _vertex.z;
+
+    }
+
+    vertex::vertex(istream&fin){
+
+        fin>>*this;
+    }
+
+    ostream& operator<<(ostream &out, vertex &_vertex)
+    {
+    int i;
+    out<<endl;
+    out<<"Neighbour No. is "<<_vertex.point_No<<endl;
+    out<< " X:"<< _vertex.x<<" Y:"<<_vertex.y<<" Z:"<<_vertex.z<<endl;
+    //out<< _vertex.point_quantity_in_neighbour<<endl;  // for test this number is big but why
+    out<< "Neighbour Point:"<<endl;
+
+    for(i=0;i<_vertex.neighbour_point_number.size();i++)
+        {
+         //out<< "1"<<endl;    // for test
+         out<<"  "<<_vertex.neighbour_point_number[i];
+        }
+
+    return out;
+    }
+
+
+
+
+    vertex::vertex(const vertex &_vertex){     //check  copy constructor
+
+
+    point_No=_vertex.point_No;
+    x=_vertex.x;
+    y=_vertex.y;
+    z=_vertex.z;
+    point_weith=_vertex.point_weith;
+    neighbour_point_number=_vertex.neighbour_point_number;
+    point_quantity_in_neighbour=_vertex.neighbour_point_number.size();
+
+    }
+
+    vertex::~vertex(){}                        //check
+
+
+   /* void vertex::set_neighbor_zero()      // check
+    {
+        int i;
+        neighbour_point_number.clear();
+        for(i=0;i<point_quantity_in_neighbour;i++)
+        {
+            neighbour_point_number.push_back (0);
+        }
+    }
+   */
+    int vertex::read_point_No() const{return point_No;}      //check
+
+
+    int vertex::read_neighbour(int No) const
+    {
+        int i;
+        vector <int> :: const_iterator it =neighbour_point_number.begin();
+        for(i=1;i<No;i++)
+            {
+                it++;
+            }
+        return *it;
+    }
+
+    //int const vertex::read_point_quantity_in_neighbour()(return point_quantity_in_neighbour;)    why in this way doesn't work
+
+    float vertex::read_x() const {return x;}                 // check
+
+    float vertex::read_y() const {return y;}                 // check
+
+    float vertex::read_z() const {return z;}                 //check
+
+    float vertex::calculate_distance(vertex base)            // check
+    {
+        float result;
+        result=pow(x-base.read_x(),2)+pow(y-base.read_y(),2)+pow(z-base.read_z(),2);
+        return sqrt(result);
+    }
+
+    void vertex::set_point_weigh(float newvalue) {point_weith=newvalue;}//check
+    void vertex::add_neighbour_point_number(int number)
+    {
+        neighbour_point_number.push_back(number);
+        point_quantity_in_neighbour=neighbour_point_number.size();
+      //  cout<<number<<endl;  // test part
+    }
+
+    void vertex::make_neighbour_point_number_unique()
+    {
+      int comparator,_size,it=0,it2;
+      _size=neighbour_point_number.size()-1;
+      /*    doesn't work
+      vector <int> :: iterator it =neighbour_point_number.begin();//   chose one to process
+      vector <int> :: iterator it2; //  compare with every one
+        while( it!=(neighbour_point_number.end()-1))
+        {
+            comparator= *it;
+            cout<< comparator<<endl;
+
+            for (it2=it+1;it2!=neighbour_point_number.end();++it2)
+            {
+                if(comparator==*it2)
+                {
+                    neighbour_point_number.erase (it2);
+
+                    cout<<" "<<*it2<<endl;
+                }
+            }
+         it++;
+        }
+        point_quantity_in_neighbour=neighbour_point_number.size();
+        cout<<"haha"<<endl;
+        */
+        /*
+        while( it!=_size)
+        {
+            comparator= neighbour_point_number[it];
+            cout<< comparator<<endl;
+
+            for (it2=it+1;it2!=_size;it2++)
+            {
+                if(comparator==neighbour_point_number[it2])
+                {
+                    neighbour_point_number.erase (neighbour_point_number.begin()+it2);
+
+                    cout<<" "<<it2<<endl;
+                }
+            }
+         it++;
+        }
+
+        */
+    }
+    float  dijstra(vector<vertex> point_information, int const start_point, int const end_point, int *shorest_path)     // without check
+    {   // vertex should be a class
+        // return a shortest distance
+        int n =point_information.size(),i,present_processing,temp_point,neighbour_counter,path_counter;
+        int *path;
+        path = new int[n];
+        shorest_path =new int[n];
+        float smallest=999999999.99,distance;
+        vector <pair<int, vertex> > all_point_with_check;
+        vector <pair<int, vertex> > :: iterator itr =all_point_with_check.begin();
+        vector <vertex> ::const_iterator it_vertex =point_information.begin();
+        for(i=0;i<n;i++)            // make the information into proper structure
+        {
+            *itr= make_pair(0,*it_vertex);
+            itr++;
+            it_vertex++;
+        }
+            // find the start point
+        //all_point_with_check[start_point-1].first=1;                               // Need to check set the right start_point No-1?   check
+        all_point_with_check[start_point-1].second.set_point_weigh(0.00);
+        while (all_point_with_check[present_processing-1].second.read_point_No()!=end_point)
+        {
+
+
+            for(i=0;i<n;i++)            //
+                {
+                    if(all_point_with_check[i].first==0)     // the key is 0, means this point haven;t been process
+                        {
+
+
+                            if(smallest > all_point_with_check[i].second.read_point_weith())     // find the point with smallest weigh
+                            {
+                                smallest =all_point_with_check[i].second.read_point_weith();
+                                temp_point=i+1;                                                  // temp_point = point_No =i+1;
+                            }
+                        }
+
+                }                       // this for loop is to find the point with minimal point
+            smallest=999999999.99;      // give the smallest value back to it, for next for loop compare
+            for (neighbour_counter=0;neighbour_counter<all_point_with_check[temp_point-1].second.read_point_quantity_in_neighbour();neighbour_counter++)
+                {
+
+                    distance=all_point_with_check[temp_point-1].second.calculate_distance(all_point_with_check[all_point_with_check[temp_point-1].second.read_neighbour(neighbour_counter+1)-1].second);
+                                        // the above line temp_point-1 means i = temp_point-1, all_point_with_check[temp_point-1].second.read_neighbour(neighbour_counter)-1
+                                        // this is same reason , may have problem, need check
+                    if(all_point_with_check[temp_point-1].second.read_point_weith()+distance < all_point_with_check[all_point_with_check[temp_point-1].second.read_neighbour(neighbour_counter+1)-1].second.read_point_weith())
+                    {
+                        all_point_with_check[all_point_with_check[temp_point-1].second.read_neighbour(neighbour_counter+1)-1].second.set_point_weigh(all_point_with_check[temp_point-1].second.read_point_weith()+distance);
+                        path[all_point_with_check[temp_point-1].second.read_neighbour(neighbour_counter+1)-1]=temp_point;
+                    }
+                }
+            all_point_with_check[i].first=1;    // set the key to 1 means : this point has been processed, next time this point will not include.
+        }
+        path_counter=end_point;    // trace back
+        i=0;
+        while (path[path_counter]!=start_point)// trace back  find the shortest path
+        {
+            shorest_path[i]=path[path_counter];
+            i++;
+            path_counter=path[path_counter];
+        }
+        return (all_point_with_check[end_point].second.read_point_weith());    // return the shortest distance in float
+    }
+    int main()
+    {
+   /* int start_point,number_of_points;
+    cout<<"Please enter the start point number  "<<endl;
+    cin << start_point;
+    while(1)
+    {
+
+
+    if(start_point<=number_of_number)
+        {
+
+
+        break;
+        }
+     else{cout<<"Beyone the available value"<<endl;}
+    }
+    */
+
+    // read data from the file
+    int number_of_input_points,number_of_input_segments, skip_bit,i,i2,no;
+    vector <vertex> map_information;
+    ifstream in("input.txt");
+
+    in>>number_of_input_points;
+    in>>skip_bit;
+    in>>skip_bit;
+    //for (i=0;i<number_of_input_points;i++)       for correct not
+      //  {
+        //    map_information[i] = new vertex;
+        //}
+    map_information.resize(number_of_input_points);
+
+    for(i=0;i<number_of_input_points;i++)
+        {
+            //map_information.push_back ( in );    // weird problem why this works
+            in>>map_information[i];  // this should be the right way
+        }
+    in>>skip_bit;
+    in>>skip_bit;
+    in>>number_of_input_segments;
+    in>>skip_bit;
+    in>>skip_bit;
+    int segment[number_of_input_segments][3];
+   // cout<<number_of_input_segments;  // for test
+    for(i=0;i<number_of_input_segments;i++)
+        {
+            in>>skip_bit;
+            for(i2=0;i2<3;i2++)
+            {
+                in>>segment[i][i2];
+            }
+        }
+
+    //in.close();
+     /*for(i=0;i<number_of_input_segments;i++) // test part the input is right all the data is input into the array
+        {
+            for(i2=0;i2<3;i2++)
+            {
+                cout<<segment[i][i2]<<" ";
+            }
+            cout<<endl;
+        }
+        */
+     //cout<<segment[0][1]<<" ";//test part
+for(no=0;no<number_of_input_points;no++)
+{
+    //cout<<no<<endl;  //test
+    for(i=0;i<number_of_input_segments;i++)
+        {
+            for(i2=0;i2<3;i2++)
+            {
+                if(segment[i][i2]==(no+1))
+                {
+                    if(i2==0)       // the first same
+                    {
+                        map_information[no].add_neighbour_point_number(segment[i][1]);
+                        map_information[no].add_neighbour_point_number(segment[i][2]);
+                    }
+                     else if (i2==1)   // the second same
+                    {
+                        map_information[no].add_neighbour_point_number(segment[i][0]);
+                        map_information[no].add_neighbour_point_number(segment[i][2]);
+                    }
+                     else //(i2==2)                // the third same
+                    {
+                        map_information[no].add_neighbour_point_number(segment[i][0]);
+                        map_information[no].add_neighbour_point_number(segment[i][1]);
+                       // cout<< segment[i][1]<<endl;   // for test
+                    }
+                }
+            }
+        }
+}
+
+     //for(i=0;i<number_of_input_points;i++)    // FOR TEST
+      //  {
+     //       map_information[i].set_point_quantity_in_neighbour();   // this line doesn't need
+           // map_information[i].make_neighbour_point_number_unique();
+           // cout << map_information[i]<<endl;//.set_point_quantity_in_neighbour();
+       // }
+        float distance;
+        int _array[10]={0};
+        distance=dijstra( map_information, 0, 3, _array);
+
+
+    //int *array2,array1[4]={2.3,23,2.2};
+    //vertex a(1,3,4,5,6,10,array1);
+    //vertex b(a);
+
+   // array2=a.read_neighbour();
+   //vertex b(1,3,0,0,0,0,array1);
+  // a.calculate_distance(b);
+   //  a.set_point_weigh(5.5);
+   // a.set_neighbor_zero();
+//    cout << "Hello world!" <<b.read_neighbour(3)<< endl;
+    return 0;
+    }
